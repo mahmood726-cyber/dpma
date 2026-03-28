@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DPMA Dashboard — Dirichlet Process Meta-Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232735;
+    --border: #2e3347;
+    --text: #e4e6ef;
+    --muted: #8b8fa3;
+    --accent: #6c8aff;
+    --accent2: #38bdf8;
+    --accent3: #a78bfa;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: "SF Mono", "Cascadia Code", Consolas, monospace;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header h1 {
+    font-size: clamp(24px, 4vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* Summary cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .card:nth-child(1)::before { background: var(--accent); }
+  .card:nth-child(2)::before { background: var(--good); }
+  .card:nth-child(3)::before { background: var(--accent2); }
+  .card:nth-child(4)::before { background: var(--accent3); }
+  .card:nth-child(5)::before { background: var(--warn); }
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .card-value {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .card:nth-child(1) .card-value { color: var(--accent); }
+  .card:nth-child(2) .card-value { color: var(--good); }
+  .card:nth-child(3) .card-value { color: var(--accent2); }
+  .card:nth-child(4) .card-value { color: var(--accent3); }
+  .card:nth-child(5) .card-value { color: var(--warn); }
+  .card-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Chart panels */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .panel h2 {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* Table */
+  .table-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    overflow-x: auto;
+  }
+  .table-panel h2 {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr:hover {
+    background: rgba(108, 138, 255, 0.06);
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-bimodal {
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--good);
+  }
+  .badge-unimodal {
+    background: rgba(139, 143, 163, 0.15);
+    color: var(--muted);
+  }
+  .mono { font-family: var(--mono); font-size: 13px; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  @media (max-width: 560px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Dirichlet Process Meta-Analysis</h1>
+    <p>Bayesian nonparametric mixture modeling applied to 307 Cochrane systematic reviews. Discovering latent subgroups that standard random-effects models conceal.</p>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Reviews Analyzed</div>
+      <div class="card-value">307</div>
+      <div class="card-sub">Cochrane systematic reviews</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Subgroups Found</div>
+      <div class="card-value">91.9%</div>
+      <div class="card-sub">282 / 307 reviews with 2+ clusters</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Mean Clusters</div>
+      <div class="card-value">2.6</div>
+      <div class="card-sub">Latent effect clusters per review</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Bimodal Predictive</div>
+      <div class="card-value">161</div>
+      <div class="card-sub">52.4% confirmed via Hartigan dip</div>
+    </div>
+    <div class="card">
+      <div class="card-label">PI Width Ratio</div>
+      <div class="card-value">3.08x</div>
+      <div class="card-sub">Wider than standard RE intervals</div>
+    </div>
+  </div>
+
+  <!-- Charts row 1 -->
+  <div class="chart-grid">
+    <div class="panel">
+      <h2>Cluster Count Distribution</h2>
+      <div class="chart-wrap"><canvas id="clusterChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Theta Shift Distribution (|DP - DL|)</h2>
+      <div class="chart-wrap"><canvas id="shiftChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="chart-grid">
+    <div class="panel">
+      <h2>Prediction Interval Width: Standard RE vs DPMA</h2>
+      <div class="chart-wrap"><canvas id="widthChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-panel">
+    <h2>Reviews with Most Subgroups</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Review ID</th>
+          <th>Studies (k)</th>
+          <th>Clusters</th>
+          <th>Theta Shift</th>
+          <th>Width Ratio</th>
+          <th>Modality</th>
+        </tr>
+      </thead>
+      <tbody id="topTable"></tbody>
+    </table>
+  </div>
+
+  <div class="footer" style="margin-top: 32px;">
+    DPMA v1.0 &mdash; Dirichlet Process Meta-Analysis &mdash; 307 Cochrane Reviews &mdash; Generated 2026-03-26
+  </div>
+</div>
+
+<script>
+  // ── Data ──
+  const clusterLabels = ['1', '2', '3', '4', '5', '6', '7', '11'];
+  const clusterCounts = [25, 158, 84, 20, 11, 4, 4, 1];
+
+  const shiftLabels = ['0-0.02', '0.02-0.05', '0.05-0.1', '0.1-0.15', '0.15-0.2', '0.2-0.3', '0.3-0.5', '0.5-1.0', '1.0-2.0', '2.0+'];
+  const shiftCounts = [58, 86, 63, 42, 17, 19, 14, 3, 1, 4];
+
+  const topReviews = [
+    { id: 'CD013800', k: 48, clusters: 11, shift: 0.0345, ratio: 1.185, bimodal: false },
+    { id: 'CD002042', k: 53, clusters: 7, shift: 0.0542, ratio: 1.641, bimodal: true },
+    { id: 'CD012186', k: 105, clusters: 7, shift: 0.0525, ratio: 1.849, bimodal: false },
+    { id: 'CD011778', k: 38, clusters: 7, shift: 0.0431, ratio: 1.080, bimodal: false },
+    { id: 'CD008858', k: 63, clusters: 7, shift: 0.0316, ratio: 1.344, bimodal: true },
+    { id: 'CD012067', k: 38, clusters: 6, shift: 0.2445, ratio: 1.249, bimodal: true },
+    { id: 'CD013197', k: 64, clusters: 6, shift: 0.1480, ratio: 1.134, bimodal: true },
+    { id: 'CD002122', k: 56, clusters: 6, shift: 0.0757, ratio: 1.912, bimodal: false },
+    { id: 'CD014966', k: 28, clusters: 6, shift: 0.0260, ratio: 1.759, bimodal: true },
+    { id: 'CD013822', k: 15, clusters: 5, shift: 0.1606, ratio: 2.881, bimodal: true },
+    { id: 'CD000547', k: 48, clusters: 5, shift: 0.1349, ratio: 1.057, bimodal: true },
+    { id: 'CD001431', k: 61, clusters: 5, shift: 0.0449, ratio: 2.769, bimodal: true },
+    { id: 'CD001155', k: 59, clusters: 4, shift: 0.0867, ratio: 1.945, bimodal: false },
+    { id: 'CD001837', k: 49, clusters: 4, shift: 0.0375, ratio: 1.500, bimodal: false },
+    { id: 'CD002290', k: 16, clusters: 4, shift: 0.0335, ratio: 1.174, bimodal: false }
+  ];
+
+  // ── Chart defaults ──
+  Chart.defaults.color = '#8b8fa3';
+  Chart.defaults.borderColor = 'rgba(46, 51, 71, 0.6)';
+  Chart.defaults.font.family = '"Segoe UI", "Helvetica Neue", Arial, sans-serif';
+
+  // ── Cluster chart ──
+  new Chart(document.getElementById('clusterChart'), {
+    type: 'bar',
+    data: {
+      labels: clusterLabels,
+      datasets: [{
+        label: 'Number of Reviews',
+        data: clusterCounts,
+        backgroundColor: clusterLabels.map((_, i) => {
+          const colors = [
+            'rgba(139, 143, 163, 0.7)',
+            'rgba(108, 138, 255, 0.8)',
+            'rgba(56, 189, 248, 0.7)',
+            'rgba(167, 139, 250, 0.7)',
+            'rgba(251, 191, 36, 0.7)',
+            'rgba(52, 211, 153, 0.6)',
+            'rgba(248, 113, 113, 0.6)',
+            'rgba(244, 114, 182, 0.6)'
+          ];
+          return colors[i] || colors[0];
+        }),
+        borderColor: 'transparent',
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#232735',
+          titleColor: '#e4e6ef',
+          bodyColor: '#e4e6ef',
+          borderColor: '#2e3347',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 12
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Number of Clusters', color: '#8b8fa3', font: { size: 12 } },
+          grid: { display: false }
+        },
+        y: {
+          title: { display: true, text: 'Reviews', color: '#8b8fa3', font: { size: 12 } },
+          grid: { color: 'rgba(46, 51, 71, 0.4)' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // ── Theta shift histogram ──
+  new Chart(document.getElementById('shiftChart'), {
+    type: 'bar',
+    data: {
+      labels: shiftLabels,
+      datasets: [{
+        label: 'Reviews',
+        data: shiftCounts,
+        backgroundColor: 'rgba(56, 189, 248, 0.65)',
+        hoverBackgroundColor: 'rgba(56, 189, 248, 0.9)',
+        borderColor: 'transparent',
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#232735',
+          titleColor: '#e4e6ef',
+          bodyColor: '#e4e6ef',
+          borderColor: '#2e3347',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 12
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Absolute Theta Shift (SD units)', color: '#8b8fa3', font: { size: 12 } },
+          grid: { display: false },
+          ticks: { maxRotation: 45, minRotation: 30 }
+        },
+        y: {
+          title: { display: true, text: 'Reviews', color: '#8b8fa3', font: { size: 12 } },
+          grid: { color: 'rgba(46, 51, 71, 0.4)' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // ── Width comparison chart ──
+  // Show paired comparison: for a sample of reviews, DL PI width vs DP PI width
+  const sampleReviews = [
+    { id: 'CD013800', dl: 0.863, dp: 1.022 },
+    { id: 'CD000219', dl: 0.735, dp: 1.563 },
+    { id: 'CD002042', dl: 1.299, dp: 2.132 },
+    { id: 'CD000547', dl: 3.634, dp: 3.841 },
+    { id: 'CD001909', dl: 0.319, dp: 2.645 },
+    { id: 'CD003331', dl: 0.549, dp: 5.028 },
+    { id: 'CD001533', dl: 0.557, dp: 3.778 },
+    { id: 'CD001703', dl: 0.617, dp: 3.963 },
+    { id: 'CD003414', dl: 0.396, dp: 1.932 },
+    { id: 'CD002971', dl: 1.048, dp: 3.744 },
+    { id: 'CD002303', dl: 1.232, dp: 2.366 },
+    { id: 'CD013822', dl: 0.410, dp: 1.181 },
+    { id: 'CD002243', dl: 0.422, dp: 1.209 },
+    { id: 'CD001396', dl: 1.132, dp: 1.967 },
+    { id: 'CD002112', dl: 0.743, dp: 1.519 }
+  ];
+
+  new Chart(document.getElementById('widthChart'), {
+    type: 'bar',
+    data: {
+      labels: sampleReviews.map(r => r.id),
+      datasets: [
+        {
+          label: 'Standard RE (DL) PI Width',
+          data: sampleReviews.map(r => r.dl),
+          backgroundColor: 'rgba(139, 143, 163, 0.6)',
+          borderColor: 'transparent',
+          borderRadius: 4,
+          borderSkipped: false
+        },
+        {
+          label: 'DPMA PI Width',
+          data: sampleReviews.map(r => r.dp),
+          backgroundColor: 'rgba(167, 139, 250, 0.7)',
+          borderColor: 'transparent',
+          borderRadius: 4,
+          borderSkipped: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 16, font: { size: 12 } }
+        },
+        tooltip: {
+          backgroundColor: '#232735',
+          titleColor: '#e4e6ef',
+          bodyColor: '#e4e6ef',
+          borderColor: '#2e3347',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 12,
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(3);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Cochrane Review ID', color: '#8b8fa3', font: { size: 12 } },
+          grid: { display: false },
+          ticks: { maxRotation: 55, minRotation: 40, font: { size: 10 } }
+        },
+        y: {
+          title: { display: true, text: 'Prediction Interval Width', color: '#8b8fa3', font: { size: 12 } },
+          grid: { color: 'rgba(46, 51, 71, 0.4)' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // ── Top reviews table ──
+  const tbody = document.getElementById('topTable');
+  topReviews.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const badgeCls = r.bimodal ? 'badge badge-bimodal' : 'badge badge-unimodal';
+    const badgeTxt = r.bimodal ? 'Bimodal' : 'Unimodal';
+    tr.innerHTML = [
+      '<td>' + (i + 1) + '</td>',
+      '<td class="mono">' + r.id + '</td>',
+      '<td>' + r.k + '</td>',
+      '<td style="font-weight:700;color:var(--accent)">' + r.clusters + '</td>',
+      '<td class="mono">' + r.shift.toFixed(4) + '</td>',
+      '<td class="mono">' + r.ratio.toFixed(3) + 'x</td>',
+      '<td><span class="' + badgeCls + '">' + badgeTxt + '</span></td>'
+    ].join('');
+    tbody.appendChild(tr);
+  });
+</script>
+</body>
+</html>
