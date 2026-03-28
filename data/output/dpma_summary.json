@@ -1,0 +1,19 @@
+{
+  "n_reviews": 307,
+  "n_subgroups_found": 282,
+  "pct_subgroups": 91.9,
+  "n_bimodal_predictive": 161,
+  "cluster_distribution": {
+    "1": 25,
+    "3": 84,
+    "2": 158,
+    "5": 11,
+    "4": 20,
+    "7": 4,
+    "6": 4,
+    "11": 1
+  },
+  "mean_theta_shift": 0.2209,
+  "mean_width_ratio": 3.08,
+  "elapsed_seconds": 1496.4
+}

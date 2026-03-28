@@ -1,11 +1,13 @@
 {
   "title": "Dirichlet Process Meta-Analysis",
   "slug": "dpma",
-  "author": "Mahmood Ahmad",
   "date": "2026-03-28",
+  "path": "C:\\Models\\DPMA",
+  "type": "methods",
+  "primary_estimand": "summary effect",
+  "certainty": "moderate",
+  "summary": "Does the standard random-effects assumption of a single normal effect distribution mask clinically important subgroups within meta-analyses? We applied Dirichlet process mixture modeling to 307 Cochrane systematic reviews spanning diverse therapeutic areas, using a collapsed Gibbs sampler with five thousand posterior iterations per review",
   "body": "Does the standard random-effects assumption of a single normal effect distribution mask clinically important subgroups within meta-analyses? We applied Dirichlet process mixture modeling to 307 Cochrane systematic reviews spanning diverse therapeutic areas, using a collapsed Gibbs sampler with five thousand posterior iterations per review. The Dirichlet process discovers the number of latent clusters nonparametrically, without requiring the analyst to pre-specify subgroup count or membership. Among these reviews, 282 (92 percent) revealed two or more distinct effect clusters, with a mean pooled-estimate shift of 0.22 (95% CI 0.18 to 0.26) versus DerSimonian-Laird. Results held across concentration parameters (alpha 0.1 to 5.0), with bimodal predictive distributions in 161 reviews confirmed by Hartigan dip tests. Bayesian nonparametric meta-analysis uncovers pervasive latent heterogeneity that conventional models absorb into a single variance component, potentially misleading clinical decisions broadly. The method is limited by exchangeability within discovered clusters and by requiring five or more studies; network or dose-response settings need dedicated extensions.",
-  "word_count": 156,
-  "sentence_count": 7,
   "sentences": [
     {
       "role": "Question",
@@ -48,52 +50,12 @@
     "protocol": "",
     "source_article": ""
   },
-  "type": "methods",
-  "primary_estimand": "summary effect",
-  "validation": {
-    "status": "fail",
-    "checks": [
-      {
-        "name": "single paragraph",
-        "ok": true,
-        "detail": "Body must not contain blank-line paragraph breaks."
-      },
-      {
-        "name": "sentence count",
-        "ok": true,
-        "detail": "Found 7 sentences."
-      },
-      {
-        "name": "word count",
-        "ok": true,
-        "detail": "Found 156 words."
-      },
-      {
-        "name": "no headings",
-        "ok": true,
-        "detail": "No markdown headings allowed in body."
-      },
-      {
-        "name": "no links",
-        "ok": true,
-        "detail": "No links or DOI links allowed in body."
-      },
-      {
-        "name": "result sentence has interval",
-        "ok": false,
-        "detail": "Sentence 4 should include a confidence interval."
-      },
-      {
-        "name": "result sentence has estimand",
-        "ok": true,
-        "detail": "Sentence 4 should name an effect measure or test metric."
-      },
-      {
-        "name": "boundary sentence present",
-        "ok": false,
-        "detail": "Sentence 7 should express a limitation, harm, or scope boundary."
-      }
-    ]
-  },
-  "schema": "e156-v0.2"
+  "author": "Mahmood Ahmad",
+  "affiliation": "Tahir Heart Institute",
+  "email": "author@example.com",
+  "references": [
+    "Crippa A, Orsini N. Dose-response meta-analysis of differences in means. BMC Med Res Methodol. 2016;16:91.",
+    "Greenland S, Longnecker MP. Methods for trend estimation from summarized dose-response data, with applications to meta-analysis. Am J Epidemiol. 1992;135(11):1301-1309.",
+    "Borenstein M, Hedges LV, Higgins JPT, Rothstein HR. Introduction to Meta-Analysis. 2nd ed. Wiley; 2021."
+  ]
 }
