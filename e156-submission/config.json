@@ -2,7 +2,7 @@
   "title": "Dirichlet Process Meta-Analysis",
   "slug": "dpma",
   "date": "2026-03-28",
-  "path": "/mnt/c/Models/DPMA",
+  "path": "C:\\Models\\DPMA",
   "type": "methods",
   "primary_estimand": "summary effect",
   "certainty": "moderate",
